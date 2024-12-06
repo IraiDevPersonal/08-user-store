@@ -25,33 +25,32 @@ export class AuthService {
     }
 
     try {
-      const user = new UserModel(registerUserDto);
+      const newUser = new UserModel(registerUserDto);
 
-      user.password = bcryptAdapter.hash(registerUserDto.password);
-      await user.save();
+      newUser.password = bcryptAdapter.hash(registerUserDto.password);
+      await newUser.save();
 
-      const { password, ...restUser } = UserEntity.fromObject(user);
-      const token = await this.generateUserToken(restUser);
+      const { password, ...user } = UserEntity.fromObject(newUser);
+      const token = await this.generateUserToken(user);
 
-      return { user: restUser, token };
+      return { user, token };
     } catch (error) {
       throw CustomError.internalServer(`${error}`);
     }
   }
 
   public async loginUser(loginUserDto: LoginUserDto) {
-    const user = await UserModel.findOne({ email: loginUserDto.email });
+    const loggedUser = await UserModel.findOne({ email: loginUserDto.email });
+    const password = loginUserDto.password;
 
-    this.notAuthenticated(user);
+    this.checkCredentials(loggedUser);
 
-    const isMatching = bcryptAdapter.compare(
-      loginUserDto.password,
-      user!.password!
-    );
+    const hashedPassword = loggedUser!.password!;
+    const isMatching = bcryptAdapter.compare(password, hashedPassword);
 
-    this.notAuthenticated(isMatching);
+    this.checkCredentials(isMatching);
 
-    const { password, ...restUser } = UserEntity.fromObject(user!);
+    const { password: _, ...restUser } = UserEntity.fromObject(loggedUser!);
     const token = await this.generateUserToken(restUser);
 
     return { user: restUser, token };
@@ -76,12 +75,13 @@ export class AuthService {
 
     user.emailValidated = true;
     await user.save();
+
     return true;
   }
 
   // PRIVATE METHODS
 
-  private notAuthenticated(evaluate: any) {
+  private checkCredentials(evaluate: any) {
     if (!evaluate) {
       throw CustomError.badRequest("Email or password is incorrect");
     }
