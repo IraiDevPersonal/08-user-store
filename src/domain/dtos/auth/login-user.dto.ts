@@ -15,6 +15,9 @@ export class LoginUserDto {
     if (!password) {
       return ["Missing password", undefined];
     }
+    if ((password as string).length < 6) {
+      return ["Password too short", undefined];
+    }
 
     return [undefined, new LoginUserDto(email, password)];
   }

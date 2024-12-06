@@ -21,9 +21,11 @@ export interface EmailServiceOptions {
 export class EmailService {
   private transporter: Transporter;
 
-  constructor(options: EmailServiceOptions) {
+  constructor(
+    options: EmailServiceOptions,
+    private readonly postToProvider: boolean
+  ) {
     const { mailerEmail, mailerService, senderEmailPassword } = options;
-
     this.transporter = nodemailer.createTransport({
       service: mailerService,
       auth: {
@@ -37,6 +39,10 @@ export class EmailService {
     const { to, subject, htmlBody, attachements = [] } = options;
 
     try {
+      if (!this.postToProvider) {
+        return true;
+      }
+
       const sentInformation = await this.transporter.sendMail({
         to: to,
         subject: subject,
