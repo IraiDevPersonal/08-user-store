@@ -15,7 +15,7 @@ export class AuthController {
     this.authService
       .registerUser(registerDto!)
       .then((user) => res.json(user))
-      .catch((error) => this.handleError(error, res));
+      .catch((error) => CustomError.handleError(error, res));
   };
 
   loginUser = (req: Request, res: Response) => {
@@ -28,7 +28,7 @@ export class AuthController {
     this.authService
       .loginUser(loginDto!)
       .then((user) => res.json(user))
-      .catch((error) => this.handleError(error, res));
+      .catch((error) => CustomError.handleError(error, res));
   };
 
   validateEmail = (req: Request, res: Response) => {
@@ -37,18 +37,6 @@ export class AuthController {
     this.authService
       .validateEmail(token)
       .then(() => res.json("Email was validated properly"))
-      .catch((error) => this.handleError(error, res));
-  };
-
-  // PRIVATE METHODS
-
-  private handleError = (error: unknown, res: Response) => {
-    if (error instanceof CustomError) {
-      return res.status(error.statusCode).json({ error: error.message });
-    }
-
-    console.log(`${error}`);
-
-    return res.status(500).json({ error: "Internal server error" });
+      .catch((error) => CustomError.handleError(error, res));
   };
 }

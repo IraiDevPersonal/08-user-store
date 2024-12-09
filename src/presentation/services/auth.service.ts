@@ -18,17 +18,24 @@ export class AuthService {
       throw CustomError.badRequest("Email already exist");
     }
 
-    const isSent = await this.sendEmailValidationToken(registerUserDto.email);
-
-    if (!isSent) {
-      throw CustomError.internalServer("Error sending email, user not created");
-    }
-
     try {
       const newUser = new UserModel(registerUserDto);
 
       newUser.password = bcryptAdapter.hash(registerUserDto.password);
-      await newUser.save();
+      const insertedUser = await newUser.save();
+
+      if (!insertedUser.isNew) {
+        throw CustomError.internalServer("User not created");
+      }
+
+      const isSent = await this.sendEmailValidationToken(registerUserDto.email);
+
+      if (!isSent) {
+        await insertedUser.deleteOne();
+        throw CustomError.internalServer(
+          "Error sending email, user not created, please try again"
+        );
+      }
 
       const { password, ...user } = UserEntity.fromObject(newUser);
       const token = await this.generateUserToken(user);

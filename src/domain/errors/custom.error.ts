@@ -1,4 +1,5 @@
 import { publicDecrypt } from "crypto";
+import { Response } from "express";
 
 export class CustomError extends Error {
   constructor(
@@ -27,4 +28,14 @@ export class CustomError extends Error {
   static internalServer(message: string = "Internal server error") {
     return new CustomError(500, message);
   }
+
+  static handleError = (error: unknown, res: Response) => {
+    if (error instanceof CustomError) {
+      return res.status(error.statusCode).json({ error: error.message });
+    }
+
+    console.log(`${error}`);
+
+    return res.status(500).json({ error: "Internal server error" });
+  };
 }
