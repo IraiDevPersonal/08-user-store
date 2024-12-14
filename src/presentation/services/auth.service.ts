@@ -64,16 +64,19 @@ export class AuthService {
   }
 
   public async validateEmail(token: string) {
-    const payload = await JwtAdapter.validateToken(token);
+    const payload = await JwtAdapter.validateToken<{ email: string }>(token);
 
-    if (!payload) {
-      throw CustomError.unautorized("Invalid token");
-    }
+    const email = this.validateToken(payload!, "email");
 
-    const { email } = payload as { email: string };
-    if (!email) {
-      throw CustomError.internalServer("Email not in token");
-    }
+    // if (!payload) {
+    //   throw CustomError.unautorized("Invalid token");
+    // }
+
+    // const { email } = payload;
+    // if (!email) {
+    //   throw CustomError.internalServer("Email not in token");
+    // }
+
     const user = await UserModel.findOne({ email });
 
     if (!user) {
@@ -86,7 +89,32 @@ export class AuthService {
     return true;
   }
 
+  public async renewUser(id: string) {
+    const loggedUser = await UserModel.findById(id);
+
+    if (!loggedUser) {
+      throw CustomError.internalServer();
+    }
+
+    const { password: _, ...restUser } = UserEntity.fromObject(loggedUser!);
+    const newToken = await this.generateUserToken(restUser);
+
+    return { user: restUser, token: newToken };
+  }
+
   // PRIVATE METHODS
+
+  private validateToken<T extends object>(payload: T, key: keyof T) {
+    if (!payload) {
+      throw CustomError.unautorized("Invalid token");
+    }
+
+    if (!payload![key]) {
+      throw CustomError.internalServer("Email not in token");
+    }
+
+    return payload[key];
+  }
 
   private checkCredentials(evaluate: any) {
     if (!evaluate) {

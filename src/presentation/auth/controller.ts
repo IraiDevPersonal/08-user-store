@@ -31,6 +31,15 @@ export class AuthController {
       .catch((error) => CustomError.handleError(error, res));
   };
 
+  renewUser = (req: Request, res: Response) => {
+    const { id = "" } = req.body.user;
+
+    this.authService
+      .renewUser(id)
+      .then((user) => res.json(user))
+      .catch((error) => CustomError.handleError(error, res));
+  };
+
   validateEmail = (req: Request, res: Response) => {
     const { token } = req.params;
 

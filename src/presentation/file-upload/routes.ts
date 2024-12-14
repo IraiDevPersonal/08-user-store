@@ -1,7 +1,11 @@
 import { Router } from "express";
 import { FileUploadController } from "./controller";
 import { FileUploadService } from "../services/file-upload.service";
-import { FileUploadMiddleware, TypeMiddleware } from "../middlewares";
+import {
+  AuthMiddleware,
+  FileUploadMiddleware,
+  TypeMiddleware,
+} from "../middlewares";
 
 export class FileUploadRoutes {
   static get routes(): Router {
@@ -11,6 +15,7 @@ export class FileUploadRoutes {
     const controller = new FileUploadController(service);
 
     // estos middlewares se aplica a todas las rutas que estan mas abajo
+    router.use(AuthMiddleware.validateJwt);
     router.use(FileUploadMiddleware.containFile);
     router.use(TypeMiddleware.validTypes(["users", "products", "categories"]));
     // api/upload<user|category\product>

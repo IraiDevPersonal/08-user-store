@@ -11,8 +11,9 @@ export class ProductRoutes {
     const controller = new ProductController(productService);
 
     // Definir las rutas
+    router.use(AuthMiddleware.validateJwt);
     router.get("/", controller.getProducts);
-    router.post("/", [AuthMiddleware.validateJwt], controller.createProduct);
+    router.post("/", controller.createProduct);
 
     return router;
   }
